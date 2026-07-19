@@ -12,33 +12,6 @@ const f0 = -114.095;
 const Ay = 111320;
 const p0 = Ay * Math.cos(Ey * Math.PI / 180);
 
-// Major Geographic & Transit Corridor Focus Coordinates
-const focusAreas = [
-    {
-        name: "Nose Hill Park Coulees (Deep Ravines)",
-        coords: [51.1150, -114.1000],
-        desc: "3.5km West. Large natural terrain with deep coulees and dense brush that reduce visibility and are difficult for search teams to cover thoroughly.",
-        type: "shelter"
-    },
-    {
-        name: "West Nose Creek Confluence / Confluence Park",
-        coords: [51.1280, -114.0530],
-        desc: "4.5km North. Intersection of two creek beds surrounded by heavy vegetation, making ground and air visibility very low.",
-        type: "water"
-    },
-    {
-        name: "CPKC Rail Corridor (Northeast Vector)",
-        coords: [51.1350, -114.0400],
-        desc: "6.0km Northeast. A major linear railway line running parallel to Nose Creek in the direction of the travel vector.",
-        type: "rail"
-    },
-    {
-        name: "Nose Creek North Valley (Country Hills)",
-        coords: [51.1550, -114.0500],
-        desc: "8.5km North. Creek bed with thick riparian vegetation that limits line-of-sight from neighboring roads and pathways.",
-        type: "water"
-    }
-];
 
 // Speed Calculation:
 // - Day Home to CCTV Walking Route Distance (on roads): ~5.5 km
@@ -181,24 +154,6 @@ const medZone = L.circle(cctvCoords, {
     dashArray: '6, 6'
 }).addTo(map);
 
-// Add Focus Markers on map
-focusAreas.forEach(area => {
-    const markerColor = area.type === 'water' ? '#3b82f6' : (area.type === 'rail' ? '#f59e0b' : '#a855f7');
-    const marker = L.circleMarker(area.coords, {
-        radius: 12,
-        fillColor: markerColor,
-        color: '#ffffff',
-        weight: 2,
-        fillOpacity: 0.9
-    }).addTo(map);
-    
-    marker.bindPopup(`
-        <div class="map-popup-content" style="min-width: 200px;">
-            <h4 style="color: ${markerColor}; text-transform: uppercase;">⚠️ Focus Area: ${area.name}</h4>
-            <p>${area.desc}</p>
-        </div>
-    `);
-});
 
 // Layer group for community searched cells
 const communitySearchedLayer = L.layerGroup().addTo(map);
