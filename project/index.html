@@ -17,8 +17,12 @@
 </head>
 <body>
     <div class="dashboard-container">
+        <nav class="mobile-nav">
+            <button id="mobile-menu-btn" class="hamburger-btn">☰</button>
+        </nav>
         <!-- Sidebar -->
         <aside class="sidebar">
+            <button id="close-sidebar-btn" class="close-sidebar-btn">×</button>
             <header class="app-header">
                 <div class="pulse-indicator red"></div>
                 <div class="header-text">
@@ -83,10 +87,34 @@
                     </div>
 
                     <div class="zone-item zone-green">
-                        <div class="zone-color-box" style="background: rgba(16, 185, 129, 0.35); border: 1px solid #10b981; width: 16px; height: 16px;"></div>
+                        <div class="zone-color-box" style="background: rgba(16, 185, 129, 0.6); border: 1px solid #10b981; width: 16px; height: 16px;"></div>
                         <div class="zone-text">
-                            <strong>Emerald Grids – Completed Coverage</strong>
-                            <p>Areas searched in the 6 hours leading up to **Saturday, July 18 at 11:36 PM** (synced from searchparker.org).</p>
+                            <strong>Public Coverage (&lt; 6h)</strong>
+                            <p>Searched recently (synced from searchparker.org).</p>
+                        </div>
+                    </div>
+                    
+                    <div class="zone-item zone-yellow" style="margin-top: 0.75rem;">
+                        <div class="zone-color-box" style="background: rgba(234, 179, 8, 0.4); border: 1px solid #eab308; width: 16px; height: 16px;"></div>
+                        <div class="zone-text">
+                            <strong>Public Coverage (6-24h)</strong>
+                            <p>Searched earlier today.</p>
+                        </div>
+                    </div>
+
+                    <div class="zone-item zone-gray" style="margin-top: 0.75rem;">
+                        <div class="zone-color-box" style="background: rgba(156, 163, 175, 0.4); border: 1px solid #9ca3af; width: 16px; height: 16px;"></div>
+                        <div class="zone-text">
+                            <strong>Public Coverage (&gt; 24h)</strong>
+                            <p>Older searches.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="zone-item zone-blue" style="margin-top: 0.75rem;">
+                        <div class="zone-color-box" style="background: rgba(59, 130, 246, 0.5); border: 1px solid #3b82f6; width: 16px; height: 16px;"></div>
+                        <div class="zone-text">
+                            <strong>Our Team's Coverage (Local)</strong>
+                            <p>Searches marked directly on this map.</p>
                         </div>
                     </div>
                 </div>
@@ -101,6 +129,7 @@
 
         <!-- Map Container -->
         <main class="map-wrapper">
+            <button id="layers-toggle-btn" class="layers-toggle-btn">🗺️ Layers & Controls</button>
             <div id="map"></div>
             <!-- Map Overlay Controls -->
             <div class="map-controls glass">

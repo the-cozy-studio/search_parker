@@ -171,91 +171,144 @@ const clickHighlight = L.rectangle([[0,0], [0,0]], {
 // Set to keep track of already drawn cells to prevent duplicates
 const loadedCellIds = new Set();
 
-// Fetch and draw live searched grid cells from Supabase
-async function loadCommunitySearchedAreas(hours = 6) {
+// Fetch and draw live searched grid cells
+async function loadCommunitySearchedAreas(hours = 720) {
     try {
         // Clear previous visual cells and tracker keys
         loadedCellIds.clear();
         communitySearchedLayer.clearLayers();
 
-        const response = await fetch(supabaseUrl, {
-            method: "POST",
-            headers: {
-                "apikey": supabaseAnonKey,
-                "Authorization": `Bearer ${supabaseAnonKey}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ p_window_hours: hours })
-        });
-        
-        if (!response.ok) {
-            console.error("Failed to fetch search cell snapshot:", response.statusText);
-            return;
+        const now = new Date();
+
+        // 1. Fetch Public Data (Supabase)
+        try {
+            const response = await fetch(supabaseUrl, {
+                method: "POST",
+                headers: {
+                    "apikey": supabaseAnonKey,
+                    "Authorization": `Bearer ${supabaseAnonKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ p_window_hours: hours })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                data.forEach(record => {
+                    const cellId = record[0];
+                    if (loadedCellIds.has(cellId)) return;
+                    loadedCellIds.add(cellId);
+                    
+                    const parts = cellId.split(':');
+                    if (parts.length !== 3) return;
+
+                    const h = parseInt(parts[0].substring(1));
+                    const x = parseInt(parts[1]);
+                    const y = parseInt(parts[2]);
+
+                    const latMin = Ey + (y * h) / Ay;
+                    const lonMin = f0 + (x * h) / p0;
+                    const latMax = Ey + ((y + 1) * h) / Ay;
+                    const lonMax = f0 + ((x + 1) * h) / p0;
+
+                    const bounds = [[latMin, lonMin], [latMax, lonMax]];
+                    const date = new Date(record[2]);
+                    const diffHours = (now - date) / (1000 * 60 * 60);
+
+                    let color = '#9ca3af'; // > 24h
+                    if (diffHours < 6) color = '#10b981'; // < 6h
+                    else if (diffHours < 24) color = '#eab308'; // 6-24h
+
+                    const rect = L.rectangle(bounds, {
+                        color: color,
+                        weight: 1,
+                        fillColor: color,
+                        fillOpacity: 0.35
+                    });
+
+                    rect.bindPopup(`
+                        <div class="map-popup-content" style="min-width: 150px;">
+                            <h4 style="color:${color};">✅ PUBLIC COVERAGE</h4>
+                            <p><strong>Grid Cell:</strong> ${cellId}</p>
+                            <p><strong>Searches Logged:</strong> ${record[1]}</p>
+                            <p><strong>Last Checked:</strong> ${date.toLocaleTimeString()} (${date.toLocaleDateString()})</p>
+                        </div>
+                    `);
+                    
+                    rect.addTo(communitySearchedLayer);
+                });
+            }
+        } catch (e) {
+            console.error("Public data fetch error:", e);
         }
 
-        const data = await response.json();
-        
-        data.forEach(record => {
-            const cellId = record[0];
-            if (loadedCellIds.has(cellId)) return;
-            loadedCellIds.add(cellId);
-            
-            const parts = cellId.split(':');
-            if (parts.length !== 3) return;
+        // 2. Fetch Local Team Data
+        try {
+            const localResponse = await fetch('/.netlify/functions/local_searches');
+            if (localResponse.ok) {
+                const localData = await localResponse.json();
+                localData.forEach(record => {
+                    const cellId = record.cellId;
+                    if (loadedCellIds.has(cellId)) return;
+                    loadedCellIds.add(cellId);
+                    
+                    const parts = cellId.split(':');
+                    if (parts.length !== 3) return;
 
-            const h = parseInt(parts[0].substring(1)); // grid resolution (e.g. 20)
-            const x = parseInt(parts[1]);
-            const y = parseInt(parts[2]);
+                    const h = parseInt(parts[0].substring(1));
+                    const x = parseInt(parts[1]);
+                    const y = parseInt(parts[2]);
 
-            // Convert grid index to latitude/longitude bounds
-            const latMin = Ey + (y * h) / Ay;
-            const lonMin = f0 + (x * h) / p0;
-            const latMax = Ey + ((y + 1) * h) / Ay;
-            const lonMax = f0 + ((x + 1) * h) / p0;
+                    const latMin = Ey + (y * h) / Ay;
+                    const lonMin = f0 + (x * h) / p0;
+                    const latMax = Ey + ((y + 1) * h) / Ay;
+                    const lonMax = f0 + ((x + 1) * h) / p0;
 
-            const bounds = [[latMin, lonMin], [latMax, lonMax]];
-            
-            // Draw rectangle over search grid cell
-            const rect = L.rectangle(bounds, {
-                color: '#10b981', // Emerald green
-                weight: 1,
-                fillColor: '#10b981',
-                fillOpacity: 0.35
-            });
+                    const bounds = [[latMin, lonMin], [latMax, lonMax]];
+                    const date = new Date(record.timestamp);
+                    const color = '#3b82f6'; // Blue
 
-            const date = new Date(record[2]);
-            rect.bindPopup(`
-                <div class="map-popup-content" style="min-width: 150px;">
-                    <h4 style="color:#10b981;">✅ AREA SEARCHED</h4>
-                    <p><strong>Grid Cell:</strong> ${cellId}</p>
-                    <p><strong>Searches Logged:</strong> ${record[1]}</p>
-                    <p><strong>Last Checked:</strong> ${date.toLocaleTimeString()} (${date.toLocaleDateString()})</p>
-                </div>
-            `);
-            
-            rect.addTo(communitySearchedLayer);
-        });
-        console.log(`Loaded ${data.length} community searched cells.`);
+                    const rect = L.rectangle(bounds, {
+                        color: color,
+                        weight: 1,
+                        fillColor: color,
+                        fillOpacity: 0.5
+                    });
+
+                    rect.bindPopup(`
+                        <div class="map-popup-content blue" style="min-width: 150px;">
+                            <h4 style="color:${color};">✅ LOCAL TEAM COVERAGE</h4>
+                            <p><strong>Grid Cell:</strong> ${cellId}</p>
+                            <p><strong>Searches Logged:</strong> 1 (Local)</p>
+                            <p><strong>Time:</strong> ${date.toLocaleTimeString()} (${date.toLocaleDateString()})</p>
+                        </div>
+                    `);
+                    
+                    rect.addTo(communitySearchedLayer);
+                });
+            }
+        } catch (e) {
+            console.error("Local data fetch error:", e);
+        }
+
     } catch (e) {
-        console.error("Error loading community search coverage:", e);
+        console.error("Error loading search coverage:", e);
     }
 }
 
-// Function to submit a newly searched cell live to Supabase
+// Function to submit a newly searched cell live to Local Server
 window.submitSearch = async function(cellId) {
     map.closePopup();
     
     try {
-        const response = await fetch(submitUrl, {
+        const response = await fetch('/.netlify/functions/local_searches', {
             method: "POST",
             headers: {
-                "apikey": supabaseAnonKey,
-                "Authorization": `Bearer ${supabaseAnonKey}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                p_cell_ids: [cellId],
-                p_searched_at: new Date().toISOString()
+                cellId: cellId,
+                timestamp: new Date().toISOString()
             })
         });
         
@@ -266,11 +319,11 @@ window.submitSearch = async function(cellId) {
         
         // Immediately trigger refresh of all searched areas
         await loadCommunitySearchedAreas();
-        alert("Success! Grid cell " + cellId + " marked as searched and synced live to searchparker.org");
+        alert("Success! Grid cell " + cellId + " marked as searched (Local Team Data).");
         
     } catch (e) {
         console.error("Error submitting search:", e);
-        alert("Network error connecting to search database.");
+        alert("Network error connecting to local database.");
     }
 }
 
@@ -313,11 +366,11 @@ map.on('click', function(e) {
     
     const popupContent = `
         <div class="map-popup-content" style="min-width: 180px; font-family: sans-serif; padding: 0.2rem;">
-            <h4 style="color:#10b981; font-weight:700; margin-bottom:0.4rem; font-size:0.85rem;">Mark Area as Searched?</h4>
+            <h4 style="color:#3b82f6; font-weight:700; margin-bottom:0.4rem; font-size:0.85rem;">Mark Area as Searched?</h4>
             <p style="font-size:0.75rem; margin-bottom:0.75rem; color:#d1d5db; line-height:1.3;">
-                Mark this 20-meter grid cell (${cellId}) as searched. This updates <strong>searchparker.org</strong> live.
+                Mark this 20-meter grid cell (${cellId}) as searched. This updates <strong>your local team map</strong> live.
             </p>
-            <button onclick="submitSearch('${cellId}')" style="background:#10b981; border:none; color:white; padding:0.45rem 0.8rem; border-radius:4px; font-weight:600; cursor:pointer; width:100%; font-size:0.75rem;">➕ Confirm Search</button>
+            <button onclick="submitSearch('${cellId}')" style="background:#3b82f6; border:none; color:white; padding:0.45rem 0.8rem; border-radius:4px; font-weight:600; cursor:pointer; width:100%; font-size:0.75rem;">➕ Confirm Search</button>
         </div>
     `;
     
@@ -388,5 +441,32 @@ document.getElementById('search-time-window').addEventListener('change', functio
         } else {
             sidebarGridDesc.innerHTML = `Areas searched in the ${hours} hours leading up to **Saturday, July 18 at 11:36 PM** (synced from searchparker.org).`;
         }
+    }
+});
+
+// Mobile UI Handlers
+document.addEventListener('DOMContentLoaded', () => {
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+    const sidebar = document.querySelector('.sidebar');
+    const layersToggleBtn = document.getElementById('layers-toggle-btn');
+    const mapControls = document.querySelector('.map-controls');
+
+    if (mobileMenuBtn && sidebar) {
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.add('open');
+        });
+    }
+
+    if (closeSidebarBtn && sidebar) {
+        closeSidebarBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+        });
+    }
+
+    if (layersToggleBtn && mapControls) {
+        layersToggleBtn.addEventListener('click', () => {
+            mapControls.classList.toggle('show');
+        });
     }
 });
