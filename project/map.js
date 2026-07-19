@@ -321,7 +321,12 @@ window.submitSearch = async function(cellId) {
         });
         
         if (!response.ok) {
-            alert("Submission failed: " + response.statusText);
+            let errorMsg = response.statusText;
+            try {
+                const errData = await response.json();
+                if (errData.error) errorMsg = errData.error;
+            } catch (e) {}
+            alert("Submission failed: " + errorMsg);
             return;
         }
         
