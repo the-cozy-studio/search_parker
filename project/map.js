@@ -321,8 +321,14 @@ map.on('click', function(e) {
         </div>
     `;
     
-    L.popup()
-        .setLatLng(e.latlng)
+    // Anchor the popup at the top-center edge of the grid cell
+    const topCenter = L.latLng(latMax, (lonMin + lonMax) / 2);
+    
+    L.popup({
+        offset: L.point(0, -4), // Offset upwards so the popup doesn't block the highlighted cell
+        closeButton: true
+    })
+        .setLatLng(topCenter)
         .setContent(popupContent)
         .openOn(map);
 });
