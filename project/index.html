@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parker Search & Rescue Prediction Portal</title>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <header class="app-header">
+                <div class="pulse-indicator red"></div>
+                <div class="header-text">
+                    <h1>MISSING CHILD SEARCH PORTAL</h1>
+                    <span class="status-badge urgent">URGENT / ACTIVE SEARCH</span>
+                </div>
+            </header>
+
+            <!-- Profile Card -->
+            <section class="profile-card card">
+                <div class="profile-header">
+                    <h2>Subject: Parker</h2>
+                    <span class="profile-tag gold">Autistic / Non-Verbal</span>
+                </div>
+                <div class="profile-details">
+                    <div class="profile-item"><strong>Age:</strong> 11 Years Old</div>
+                    <div class="profile-item"><strong>Height:</strong> 4'11" (150 cm)</div>
+                    <div class="profile-item"><strong>Weight:</strong> ~90 lbs (41 kg)</div>
+                    <div class="profile-item"><strong>Hair:</strong> Brown</div>
+                    <div class="profile-item"><strong>Eyes:</strong> Brown</div>
+                </div>
+                <div class="profile-warning-box">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span><strong>Important Note:</strong> Parker is autistic and non-verbal. He may not respond if his name is called.</span>
+                </div>
+            </section>
+
+            <!-- Timeline -->
+            <section class="timeline-section card">
+                <h3>Sighting Timeline</h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot blue"></div>
+                        <div class="timeline-content">
+                            <span class="time">July 16, 2026 @ 11:20 AM</span>
+                            <span class="event">Last Seen at Day Home</span>
+                            <span class="location">0-100 block Connaught Drive NW</span>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot red"></div>
+                        <div class="timeline-content">
+                            <span class="time">July 16, 2026 @ 12:52 PM</span>
+                            <span class="event">CCTV Sighting</span>
+                            <span class="location">5000-6000 block Travis Crescent NE</span>
+                        </div>
+                    </div>
+                    <div class="timeline-item current">
+                        <div class="timeline-dot gold pulse"></div>
+                        <div class="timeline-content">
+                            <span class="time">July 18, 2026 @ 10:27 PM</span>
+                            <span class="event">Current Time</span>
+                            <span class="duration">57.5 Hours Elapsed</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Search Area & Bounds Info -->
+            <section class="predictions card">
+                <h3>Travel & Prediction Metrics</h3>
+                <div class="metric-grid">
+                    <div class="metric-box">
+                        <span class="metric-val">~5.5 km</span>
+                        <span class="metric-lbl">Road Walking Distance</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-val">3.2 - 4.7 km/h</span>
+                        <span class="metric-lbl">Calculated Speed (Range)</span>
+                    </div>
+                    <div class="metric-box">
+                        <span class="metric-val">Northeast (65°)</span>
+                        <span class="metric-lbl">Direction of Travel</span>
+                    </div>
+                </div>
+
+                <div class="zone-info">
+                    <h4>Predicted Search Areas (Realistic Survival Limits)</h4>
+                    <div class="zone-item zone-high">
+                        <div class="zone-color-box"></div>
+                        <div class="zone-text">
+                            <strong>1. High Probability Focus Area (5.0 km Radius)</strong>
+                            <p>Immediate focal area. Covers Cambrian Heights, Thorncliffe, Nose Hill Park, and the primary Nose Creek corridor where he is most likely located.</p>
+                        </div>
+                    </div>
+                    <div class="zone-item zone-medium">
+                        <div class="zone-color-box"></div>
+                        <div class="zone-text">
+                            <strong>2. Medium Probability Area (10.0 km Radius)</strong>
+                            <p>Max displacement limit. Accounting for fatigue and dehydration over 57 hours, wandering subjects are statistically found inside this distance from last sighting.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </aside>
+
+        <!-- Map Container -->
+        <main class="map-wrapper">
+            <div id="map"></div>
+            <!-- Map Overlay Controls -->
+            <div class="map-controls glass">
+                <h3>Map Layers & Controls</h3>
+                <div class="control-group">
+                    <label class="control-item">
+                        <input type="checkbox" id="show-cone" checked>
+                        <span>Show Predicted Cone (Northeast Direction)</span>
+                    </label>
+                    <label class="control-item">
+                        <input type="checkbox" id="show-high-zone" checked>
+                        <span>Show High Probability Zone (5.0 km)</span>
+                    </label>
+                    <label class="control-item">
+                        <input type="checkbox" id="show-med-zone" checked>
+                        <span>Show Medium Probability Zone (10.0 km)</span>
+                    </label>
+                </div>
+                <div class="attractions-panel">
+                    <h4>Critical Hiding & Water Focus Locations:</h4>
+                    <ul>
+                        <li>🌳 <strong>Nose Hill Park Coulees</strong> - Deep wooded ravines (3.5km W)</li>
+                        <li>💧 <strong>Confluence Park / West Nose Creek</strong> - Dense vegetation (4.5km N)</li>
+                        <li>🛤️ <strong>CPKC Railway Corridor</strong> - NE track corridor (6.0km NE)</li>
+                        <li>💧 <strong>Nose Creek North Bed</strong> - Water source & cover (8.5km N)</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Map Logic -->
+    <script src="map.js"></script>
+</body>
+</html>

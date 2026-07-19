@@ -1,0 +1,219 @@
+// Coordinates
+const dayHomeCoords = [51.0850566, -114.0931908];
+const cctvCoords = [51.1009931, -114.0582958];
+
+// Major Geographic & Transit Corridor Focus Coordinates
+const focusAreas = [
+    {
+        name: "Nose Hill Park Coulees (Deep Ravines)",
+        coords: [51.1150, -114.1000],
+        desc: "3.5km West. Large natural terrain with deep coulees and dense brush that reduce visibility and are difficult for search teams to cover thoroughly.",
+        type: "shelter"
+    },
+    {
+        name: "West Nose Creek Confluence / Confluence Park",
+        coords: [51.1280, -114.0530],
+        desc: "4.5km North. Intersection of two creek beds surrounded by heavy vegetation, making ground and air visibility very low.",
+        type: "water"
+    },
+    {
+        name: "CPKC Rail Corridor (Northeast Vector)",
+        coords: [51.1350, -114.0400],
+        desc: "6.0km Northeast. A major linear railway line running parallel to Nose Creek in the direction of the travel vector.",
+        type: "rail"
+    },
+    {
+        name: "Nose Creek North Valley (Country Hills)",
+        coords: [51.1550, -114.0500],
+        desc: "8.5km North. Creek bed with thick riparian vegetation that limits line-of-sight from neighboring roads and pathways.",
+        type: "water"
+    }
+];
+
+// Speed Calculation:
+// - Day Home to CCTV Walking Route Distance (on roads): ~5.5 km
+// - Time Elapsed: 1.533 hours (92 mins)
+// - Real Road-Walking Speed: 3.6 km/h
+const walkingSpeed = 3.6; 
+
+// Displacement Search Radii (Straight-line search zones):
+// Although he could walk a total cumulative path distance of 18-43 km,
+// wandering patterns mean he doubles back and winds through streets, keeping his straight-line
+// displacement from CCTV relatively close.
+// 1. High Probability Search Zone: 5.0 km radius (Displacement)
+const highRadius = 5000; 
+// 2. Medium Probability Limit: 10.0 km radius (Maximum displacement considering dehydration/fatigue limit)
+const medRadius = 10000; 
+
+// Initialize Map with Satellite Hybrid as default view (zoomed in for local search detail)
+const map = L.map('map', {
+    zoomSnap: 0.5
+}).setView(cctvCoords, 12);
+
+// Base Map Layers
+const satelliteHybrid = L.layerGroup([
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 18,
+        minZoom: 9,
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    }),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 18,
+        minZoom: 9,
+        attribution: 'Labels &copy; Esri &mdash; Street references overlay'
+    })
+]);
+
+const darkMap = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 18,
+    minZoom: 9,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+});
+
+const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    minZoom: 9,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+});
+
+satelliteHybrid.addTo(map);
+
+// Add Base Map Layer Control
+const baseMaps = {
+    "🛰️ Satellite Hybrid": satelliteHybrid,
+    "🌑 Dark Mode Map": darkMap,
+    "🗺️ Standard Street Map": streetMap
+};
+L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
+
+// Markers
+const dayHomeMarker = L.circleMarker(dayHomeCoords, {
+    radius: 9,
+    fillColor: '#3b82f6',
+    color: '#ffffff',
+    weight: 2,
+    fillOpacity: 0.8
+}).addTo(map);
+
+dayHomeMarker.bindPopup(`
+    <div class="map-popup-content blue">
+        <h4>Day Home (Last Seen)</h4>
+        <p><strong>Time:</strong> July 16, 11:20 AM</p>
+        <span>Coordinates: ${dayHomeCoords[0].toFixed(5)}, ${dayHomeCoords[1].toFixed(5)}</span>
+    </div>
+`);
+
+const cctvMarker = L.circleMarker(cctvCoords, {
+    radius: 9,
+    fillColor: '#ef4444',
+    color: '#ffffff',
+    weight: 2,
+    fillOpacity: 0.8
+}).addTo(map);
+
+cctvMarker.bindPopup(`
+    <div class="map-popup-content">
+        <h4>CCTV Sighting</h4>
+        <p><strong>Time:</strong> July 16, 12:52 PM</p>
+        <span>Coordinates: ${cctvCoords[0].toFixed(5)}, ${cctvCoords[1].toFixed(5)}</span>
+    </div>
+`);
+
+// Travel Vector (Direction)
+const vectorLine = L.polyline([dayHomeCoords, cctvCoords], {
+    color: '#f59e0b',
+    weight: 3,
+    dashArray: '5, 10',
+    opacity: 0.8
+}).addTo(map);
+
+// Helper function to create a travel cone/sector polygon
+function getSectorPolygon(center, startAngle, endAngle, radiusKm) {
+    const lat = center[0];
+    const lon = center[1];
+    const points = [center];
+    const earthRadius = 6371; // km
+    
+    for (let angle = startAngle; angle <= endAngle; angle += 5) {
+        const angleRad = (angle * Math.PI) / 180;
+        const bearingRad = Math.PI / 2 - angleRad;
+        const dLat = (radiusKm / earthRadius) * Math.cos(bearingRad);
+        const dLon = (radiusKm / earthRadius) * Math.sin(bearingRad) / Math.cos((lat * Math.PI) / 180);
+        points.push([lat + (dLat * 180) / Math.PI, lon + (dLon * 180) / Math.PI]);
+    }
+    
+    return points;
+}
+
+// 1. Predicted Cone (Northeast Direction) - Bearing roughly 35° to 95° from CCTV extending 10km (Medium Limit)
+const conePoints = getSectorPolygon(cctvCoords, 35, 95, 10.0);
+const travelCone = L.polygon(conePoints, {
+    color: '#f59e0b',
+    fillColor: '#f59e0b',
+    fillOpacity: 0.45, // Significantly darker shading
+    weight: 3.5,       // Thicker border
+    dashArray: '4, 6'
+}).addTo(map);
+
+// 2. High Probability Search Zone (5.0 km Radius around CCTV)
+const highZone = L.circle(cctvCoords, {
+    radius: highRadius,
+    color: '#ef4444',
+    fillColor: '#ef4444',
+    fillOpacity: 0.22, // Darker red fill
+    weight: 3.5        // Thicker border
+}).addTo(map);
+
+// 3. Medium Probability Search Zone (10.0 km Radius around CCTV)
+const medZone = L.circle(cctvCoords, {
+    radius: medRadius,
+    color: '#f59e0b',
+    fillColor: '#f59e0b',
+    fillOpacity: 0.06, // Light orange background fill to shade the outer area
+    weight: 3.0,       // Thicker border
+    dashArray: '6, 6'
+}).addTo(map);
+
+// Add Focus Markers on map
+focusAreas.forEach(area => {
+    const markerColor = area.type === 'water' ? '#3b82f6' : (area.type === 'rail' ? '#f59e0b' : '#a855f7');
+    const marker = L.circleMarker(area.coords, {
+        radius: 12,
+        fillColor: markerColor,
+        color: '#ffffff',
+        weight: 2,
+        fillOpacity: 0.9
+    }).addTo(map);
+    
+    marker.bindPopup(`
+        <div class="map-popup-content" style="min-width: 200px;">
+            <h4 style="color: ${markerColor}; text-transform: uppercase;">⚠️ Focus Area: ${area.name}</h4>
+            <p>${area.desc}</p>
+        </div>
+    `);
+});
+
+// Set bounds to Medium Probability Zone (10.0 km) to restrict view
+const bounds = medZone.getBounds();
+
+window.addEventListener('load', () => {
+    map.invalidateSize();
+    map.fitBounds(bounds, { padding: [20, 20] });
+    map.setMaxBounds(bounds.pad(0.05)); // Lock view inside the 10km boundary
+});
+
+// Layer toggles
+document.getElementById('show-cone').addEventListener('change', function(e) {
+    if (e.target.checked) map.addLayer(travelCone);
+    else map.removeLayer(travelCone);
+});
+
+document.getElementById('show-high-zone').addEventListener('change', function(e) {
+    if (e.target.checked) map.addLayer(highZone);
+    else map.removeLayer(highZone);
+});
+
+document.getElementById('show-med-zone').addEventListener('change', function(e) {
+    if (e.target.checked) map.addLayer(medZone);
+    else map.removeLayer(medZone);
+});
