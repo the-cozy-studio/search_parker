@@ -170,6 +170,7 @@ const clickHighlight = L.rectangle([[0,0], [0,0]], {
 
 // Set to keep track of already drawn cells to prevent duplicates
 const loadedCellIds = new Set();
+let lastSyncTime = null;
 
 // Fetch and draw live searched grid cells
 async function loadCommunitySearchedAreas(hours = 24) {
@@ -189,6 +190,7 @@ async function loadCommunitySearchedAreas(hours = 24) {
                 
                 // Use snapshot sync time for UI
                 now = new Date(snapshot.sync_time);
+                lastSyncTime = now;
                 const syncTimeStr = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
                 
                 const headerSyncEl = document.getElementById('sync-time-header');
@@ -196,6 +198,10 @@ async function loadCommunitySearchedAreas(hours = 24) {
                 
                 const sidebarSyncEl = document.getElementById('sync-time-sidebar');
                 if (sidebarSyncEl) sidebarSyncEl.textContent = syncTimeStr;
+
+                const recordsCount = snapshot.records ? snapshot.records.length : 0;
+                const recordsHeaderEl = document.getElementById('sync-records-header');
+                if (recordsHeaderEl) recordsHeaderEl.textContent = recordsCount.toLocaleString();
 
                 // Filter data by hours requested
                 const nowTime = now.getTime();
@@ -466,7 +472,8 @@ document.getElementById('search-time-window').addEventListener('change', functio
     // Dynamically update the sidebar text to reflect the chosen timeframe
     const sidebarGridDesc = document.querySelector('.zone-green p');
     if (sidebarGridDesc) {
-        const syncTimeStr = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        const syncTime = lastSyncTime || new Date();
+        const syncTimeStr = syncTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
         if (hours === 720) {
             sidebarGridDesc.innerHTML = `All-time community searched coverage (synced at ${syncTimeStr} from searchparker.org).`;
         } else {
