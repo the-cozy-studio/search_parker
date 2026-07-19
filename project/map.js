@@ -73,7 +73,7 @@ const dayHomeMarker = L.circleMarker(dayHomeCoords, {
     color: '#ffffff',
     weight: 2,
     fillOpacity: 0.8
-}).addTo(map);
+});
 
 dayHomeMarker.bindPopup(`
     <div class="map-popup-content blue">
@@ -89,7 +89,7 @@ const cctvMarker = L.circleMarker(cctvCoords, {
     color: '#ffffff',
     weight: 2,
     fillOpacity: 0.8
-}).addTo(map);
+});
 
 cctvMarker.bindPopup(`
     <div class="map-popup-content">
@@ -105,7 +105,10 @@ const vectorLine = L.polyline([dayHomeCoords, cctvCoords], {
     weight: 3,
     dashArray: '5, 10',
     opacity: 0.8
-}).addTo(map);
+});
+
+// Group the landmarks & travel vector path into a single layer
+const sightingsLayer = L.layerGroup([dayHomeMarker, cctvMarker, vectorLine]).addTo(map);
 
 // Helper function to create a travel cone/sector polygon
 function getSectorPolygon(center, startAngle, endAngle, radiusKm) {
@@ -253,4 +256,9 @@ document.getElementById('show-med-zone').addEventListener('change', function(e) 
 document.getElementById('show-community-searched').addEventListener('change', function(e) {
     if (e.target.checked) map.addLayer(communitySearchedLayer);
     else map.removeLayer(communitySearchedLayer);
+});
+
+document.getElementById('show-sightings').addEventListener('change', function (e) {
+    if (e.target.checked) map.addLayer(sightingsLayer);
+    else map.removeLayer(sightingsLayer);
 });
