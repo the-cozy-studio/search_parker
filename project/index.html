@@ -22,7 +22,7 @@
             <header class="app-header">
                 <div class="pulse-indicator red"></div>
                 <div class="header-text">
-                    <h1>MISSING CHILD SEARCH PORTAL</h1>
+                    <h1>PARKER SEARCH PORTAL</h1>
                     <span class="status-badge urgent">URGENT / ACTIVE SEARCH</span>
                 </div>
             </header>
@@ -30,88 +30,63 @@
             <!-- Profile Card -->
             <section class="profile-card card">
                 <div class="profile-header">
-                    <h2>Subject: Parker</h2>
-                    <span class="profile-tag gold">Autistic / Non-Verbal</span>
+                    <h2>Parker (11 yo)</h2>
+                    <span class="profile-tag gold">Non-Verbal</span>
                 </div>
-                <div class="profile-details">
-                    <div class="profile-item"><strong>Age:</strong> 11 Years Old</div>
-                    <div class="profile-item"><strong>Height:</strong> 4'11" (150 cm)</div>
-                    <div class="profile-item"><strong>Weight:</strong> ~90 lbs (41 kg)</div>
-                    <div class="profile-item"><strong>Hair:</strong> Brown</div>
-                    <div class="profile-item"><strong>Eyes:</strong> Brown</div>
+                <div class="profile-details" style="grid-template-columns: repeat(3, 1fr); padding: 0.5rem; text-align: center;">
+                    <div class="profile-item" style="font-size: 0.75rem;"><strong>Height:</strong> 4'11"</div>
+                    <div class="profile-item" style="font-size: 0.75rem;"><strong>Weight:</strong> ~90 lbs</div>
+                    <div class="profile-item" style="font-size: 0.75rem;"><strong>Hair:</strong> Brown</div>
                 </div>
                 <div class="profile-warning-box">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    <span><strong>Important Note:</strong> Parker is autistic and non-verbal. He may not respond if his name is called.</span>
+                    <span><strong>CRITICAL NOTE:</strong> Parker is autistic and non-verbal. He is likely hiding and <strong>will not respond</strong> if called. Check under decks, inside sheds, garages, and thick bushes.</span>
                 </div>
             </section>
 
-            <!-- Timeline -->
-            <section class="timeline-section card">
-                <h3>Sighting Timeline</h3>
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-dot blue"></div>
-                        <div class="timeline-content">
-                            <span class="time">July 16, 2026 @ 11:20 AM</span>
-                            <span class="event">Last Seen at Day Home</span>
-                            <span class="location">0-100 block Connaught Drive NW</span>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-dot red"></div>
-                        <div class="timeline-content">
-                            <span class="time">July 16, 2026 @ 12:52 PM</span>
-                            <span class="event">CCTV Sighting</span>
-                            <span class="location">5000-6000 block Travis Crescent NE</span>
-                        </div>
-                    </div>
-                    <div class="timeline-item current">
-                        <div class="timeline-dot gold pulse"></div>
-                        <div class="timeline-content">
-                            <span class="time">July 18, 2026 @ 10:27 PM</span>
-                            <span class="event">Current Time</span>
-                            <span class="duration">57.5 Hours Elapsed</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Search Area & Bounds Info -->
+            <!-- Search Guide -->
             <section class="predictions card">
-                <h3>Travel & Prediction Metrics</h3>
-                <div class="metric-grid">
-                    <div class="metric-box">
-                        <span class="metric-val">~5.5 km</span>
-                        <span class="metric-lbl">Road Walking Distance</span>
+                <h3>Map Search Guide</h3>
+                
+                <div class="zone-info" style="margin-top: 0; padding-top: 0; border: none;">
+                    <div class="zone-item zone-high" style="margin-bottom: 0.75rem;">
+                        <div class="zone-color-box" style="background: rgba(239, 68, 68, 0.22); border: 2px solid #ef4444; width: 16px; height: 16px;"></div>
+                        <div class="zone-text">
+                            <strong>Red Circle (5.0 km) – High Probability</strong>
+                            <p>75% of historical cases are found within this radius. Focus search density here first.</p>
+                        </div>
                     </div>
-                    <div class="metric-box">
-                        <span class="metric-val">3.2 - 4.7 km/h</span>
-                        <span class="metric-lbl">Calculated Speed (Range)</span>
+                    
+                    <div class="zone-item zone-medium" style="margin-bottom: 0.75rem;">
+                        <div class="zone-color-box" style="background: rgba(245, 158, 11, 0.06); border: 2px dashed #f59e0b; width: 16px; height: 16px;"></div>
+                        <div class="zone-text">
+                            <strong>Orange Circle (10.0 km) – Max Search Limit</strong>
+                            <p>Maximum physical limit based on dehydration and exhaustion. Covers 95% of cases.</p>
+                        </div>
                     </div>
-                    <div class="metric-box">
-                        <span class="metric-val">Northeast (65°)</span>
-                        <span class="metric-lbl">Direction of Travel</span>
-                    </div>
-                </div>
 
-                <div class="zone-info">
-                    <h4>Predicted Search Areas (Realistic Survival Limits)</h4>
-                    <div class="zone-item zone-high">
-                        <div class="zone-color-box"></div>
+                    <div class="zone-item zone-cone" style="margin-bottom: 0.75rem;">
+                        <div class="zone-color-box" style="background: rgba(245, 158, 11, 0.45); border: 1.5px solid #f59e0b; width: 16px; height: 16px;"></div>
                         <div class="zone-text">
-                            <strong>1. High Probability Focus Area (5.0 km Radius)</strong>
-                            <p>Immediate focal area. Covers Cambrian Heights, Thorncliffe, Nose Hill Park, and the primary Nose Creek corridor where he is most likely located.</p>
+                            <strong>Orange Wedge – Projected Path</strong>
+                            <p>Projected Northeast travel direction (65° bearing). Prioritize areas along this path.</p>
                         </div>
                     </div>
-                    <div class="zone-item zone-medium">
-                        <div class="zone-color-box"></div>
+
+                    <div class="zone-item zone-green">
+                        <div class="zone-color-box" style="background: rgba(16, 185, 129, 0.35); border: 1px solid #10b981; width: 16px; height: 16px;"></div>
                         <div class="zone-text">
-                            <strong>2. Medium Probability Area (10.0 km Radius)</strong>
-                            <p>Max displacement limit. Accounting for fatigue and dehydration over 57 hours, wandering subjects are statistically found inside this distance from last sighting.</p>
+                            <strong>Emerald Grids – Completed Coverage</strong>
+                            <p>Areas searched by volunteers in the past 6 hours. Focus searches on the <strong>gaps</strong> between these grids.</p>
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <!-- Data Sources -->
+            <section class="sources card" style="padding: 0.85rem; font-size: 0.75rem; color: var(--text-muted); line-height: 1.35; display: flex; flex-direction: column; gap: 0.35rem;">
+                <p><strong>Historic Wander Limits:</strong> Robert Koester / ISRID Database (<a href="https://www.dbs-sar.com/" target="_blank" style="color: var(--accent-gold); text-decoration: none;">dBS Publications</a>).</p>
+                <p><strong>Live Search Coverage:</strong> Real-time volunteer reports synced from <a href="https://searchparker.org/" target="_blank" style="color: #10b981; text-decoration: none; font-weight: 600;">searchparker.org</a>.</p>
             </section>
         </aside>
 
