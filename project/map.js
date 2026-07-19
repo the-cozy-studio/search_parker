@@ -172,6 +172,9 @@ const clickHighlight = L.rectangle([[0,0], [0,0]], {
 const loadedCellIds = new Set();
 let lastSyncTime = null;
 
+// Check if the serverless backend is available (disabled on GitHub Pages static host)
+const isBackendAvailable = !window.location.hostname.includes('github.io') && window.location.protocol !== 'file:';
+
 // Fetch and draw live searched grid cells
 async function loadCommunitySearchedAreas(hours = 24) {
     try {
@@ -265,60 +268,62 @@ async function loadCommunitySearchedAreas(hours = 24) {
             console.error("Public data fetch error:", e);
         }
 
-        // 2. Fetch Local Team Data
-        try {
-            const localResponse = await fetch('/.netlify/functions/local_searches');
-            if (localResponse.ok) {
-                const localData = await localResponse.json();
-                localData.forEach(record => {
-                    const cellId = record.cellId;
-                    if (loadedCellIds.has(cellId)) return;
-                    loadedCellIds.add(cellId);
-                    
-                    const parts = cellId.split(':');
-                    if (parts.length !== 3) return;
+        // 2. Fetch Local Team Data (only if backend is available)
+        if (isBackendAvailable) {
+            try {
+                const localResponse = await fetch('/.netlify/functions/local_searches');
+                if (localResponse.ok) {
+                    const localData = await localResponse.json();
+                    localData.forEach(record => {
+                        const cellId = record.cellId;
+                        if (loadedCellIds.has(cellId)) return;
+                        loadedCellIds.add(cellId);
+                        
+                        const parts = cellId.split(':');
+                        if (parts.length !== 3) return;
 
-                    const h = parseInt(parts[0].substring(1));
-                    const x = parseInt(parts[1]);
-                    const y = parseInt(parts[2]);
+                        const h = parseInt(parts[0].substring(1));
+                        const x = parseInt(parts[1]);
+                        const y = parseInt(parts[2]);
 
-                    const latMin = Ey + (y * h) / Ay;
-                    const lonMin = f0 + (x * h) / p0;
-                    const latMax = Ey + ((y + 1) * h) / Ay;
-                    const lonMax = f0 + ((x + 1) * h) / p0;
+                        const latMin = Ey + (y * h) / Ay;
+                        const lonMin = f0 + (x * h) / p0;
+                        const latMax = Ey + ((y + 1) * h) / Ay;
+                        const lonMax = f0 + ((x + 1) * h) / p0;
 
-                    // Optimization: Skip rendering cells outside the 10km (medRadius) radius
-                    const cellCenter = L.latLng((latMin + latMax) / 2, (lonMin + lonMax) / 2);
-                    const cctvLatLng = L.latLng(cctvCoords[0], cctvCoords[1]);
-                    if (cctvLatLng.distanceTo(cellCenter) > medRadius) {
-                        return; // Skip rendering to improve performance
-                    }
+                        // Optimization: Skip rendering cells outside the 10km (medRadius) radius
+                        const cellCenter = L.latLng((latMin + latMax) / 2, (lonMin + lonMax) / 2);
+                        const cctvLatLng = L.latLng(cctvCoords[0], cctvCoords[1]);
+                        if (cctvLatLng.distanceTo(cellCenter) > medRadius) {
+                            return; // Skip rendering to improve performance
+                        }
 
-                    const bounds = [[latMin, lonMin], [latMax, lonMax]];
-                    const date = new Date(record.timestamp);
-                    const color = '#3b82f6'; // Blue
+                        const bounds = [[latMin, lonMin], [latMax, lonMax]];
+                        const date = new Date(record.timestamp);
+                        const color = '#3b82f6'; // Blue
 
-                    const rect = L.rectangle(bounds, {
-                        color: color,
-                        weight: 1,
-                        fillColor: color,
-                        fillOpacity: 0.5
+                        const rect = L.rectangle(bounds, {
+                            color: color,
+                            weight: 1,
+                            fillColor: color,
+                            fillOpacity: 0.5
+                        });
+
+                        rect.bindPopup(`
+                            <div class="map-popup-content blue" style="min-width: 150px;">
+                                <h4 style="color:${color};">✅ LOCAL TEAM COVERAGE</h4>
+                                <p><strong>Grid Cell:</strong> ${cellId}</p>
+                                <p><strong>Searches Logged:</strong> 1 (Local)</p>
+                                <p><strong>Time:</strong> ${date.toLocaleTimeString()} (${date.toLocaleDateString()})</p>
+                            </div>
+                        `);
+                        
+                        rect.addTo(communitySearchedLayer);
                     });
-
-                    rect.bindPopup(`
-                        <div class="map-popup-content blue" style="min-width: 150px;">
-                            <h4 style="color:${color};">✅ LOCAL TEAM COVERAGE</h4>
-                            <p><strong>Grid Cell:</strong> ${cellId}</p>
-                            <p><strong>Searches Logged:</strong> 1 (Local)</p>
-                            <p><strong>Time:</strong> ${date.toLocaleTimeString()} (${date.toLocaleDateString()})</p>
-                        </div>
-                    `);
-                    
-                    rect.addTo(communitySearchedLayer);
-                });
+                }
+            } catch (e) {
+                console.error("Local data fetch error:", e);
             }
-        } catch (e) {
-            console.error("Local data fetch error:", e);
         }
 
     } catch (e) {
@@ -328,6 +333,7 @@ async function loadCommunitySearchedAreas(hours = 24) {
 
 // Function to submit a newly searched cell live to Local Server
 window.submitSearch = async function(cellId) {
+    if (!isBackendAvailable) return;
     map.closePopup();
     
     try {
@@ -364,6 +370,8 @@ window.submitSearch = async function(cellId) {
 
 // Map Click Listener to let searchers click to mark areas
 map.on('click', function(e) {
+    if (!isBackendAvailable) return; // Disable click-to-mark on static hosts
+    
     const lat = e.latlng.lat;
     const lon = e.latlng.lng;
     
@@ -434,6 +442,16 @@ window.addEventListener('load', () => {
     map.fitBounds(bounds, { padding: [20, 20] });
     map.setMaxBounds(bounds.pad(0.05)); // Lock view inside the 10km boundary
     
+    // Dim local team zone if backend is not available
+    if (!isBackendAvailable) {
+        const localTeamZone = document.getElementById('local-team-zone');
+        if (localTeamZone) {
+            localTeamZone.style.opacity = '0.5';
+            const desc = localTeamZone.querySelector('p');
+            if (desc) desc.innerHTML = '<em>Unavailable on static host (Netlify only).</em>';
+        }
+    }
+
     // Load the searched grid cells based on default dropdown value (24 hours)
     const initialHours = parseInt(document.getElementById('search-time-window').value) || 24;
     loadCommunitySearchedAreas(initialHours);
