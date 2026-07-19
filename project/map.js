@@ -179,6 +179,14 @@ async function loadCommunitySearchedAreas(hours = 720) {
         communitySearchedLayer.clearLayers();
 
         const now = new Date();
+        const syncTimeStr = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        
+        // Update UI with exact sync time
+        const headerSyncEl = document.getElementById('sync-time-header');
+        if (headerSyncEl) headerSyncEl.textContent = syncTimeStr;
+        
+        const sidebarSyncEl = document.getElementById('sync-time-sidebar');
+        if (sidebarSyncEl) sidebarSyncEl.textContent = syncTimeStr;
 
         // 1. Fetch Public Data (Supabase)
         try {
@@ -436,10 +444,11 @@ document.getElementById('search-time-window').addEventListener('change', functio
     // Dynamically update the sidebar text to reflect the chosen timeframe
     const sidebarGridDesc = document.querySelector('.zone-green p');
     if (sidebarGridDesc) {
+        const syncTimeStr = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
         if (hours === 720) {
-            sidebarGridDesc.innerHTML = `All-time community searched coverage (synced from searchparker.org).`;
+            sidebarGridDesc.innerHTML = `All-time community searched coverage (synced at ${syncTimeStr} from searchparker.org).`;
         } else {
-            sidebarGridDesc.innerHTML = `Areas searched in the last ${hours} hours (synced live from searchparker.org).`;
+            sidebarGridDesc.innerHTML = `Areas searched in the last ${hours} hours (synced at ${syncTimeStr} from searchparker.org).`;
         }
     }
 });
