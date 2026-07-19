@@ -178,30 +178,32 @@ async function loadCommunitySearchedAreas(hours = 24) {
         loadedCellIds.clear();
         communitySearchedLayer.clearLayers();
 
-        const now = new Date();
-        const syncTimeStr = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-        
-        // Update UI with exact sync time
-        const headerSyncEl = document.getElementById('sync-time-header');
-        if (headerSyncEl) headerSyncEl.textContent = syncTimeStr;
-        
-        const sidebarSyncEl = document.getElementById('sync-time-sidebar');
-        if (sidebarSyncEl) sidebarSyncEl.textContent = syncTimeStr;
+        let now = new Date();
 
-        // 1. Fetch Public Data (Supabase)
+        // 1. Fetch Public Data (Local Snapshot from source of truth)
         try {
-            const response = await fetch(supabaseUrl, {
-                method: "POST",
-                headers: {
-                    "apikey": supabaseAnonKey,
-                    "Authorization": `Bearer ${supabaseAnonKey}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ p_window_hours: hours })
-            });
+            const response = await fetch('data/search_coverage.json');
             
             if (response.ok) {
-                const data = await response.json();
+                const snapshot = await response.json();
+                
+                // Use snapshot sync time for UI
+                now = new Date(snapshot.sync_time);
+                const syncTimeStr = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                
+                const headerSyncEl = document.getElementById('sync-time-header');
+                if (headerSyncEl) headerSyncEl.textContent = syncTimeStr;
+                
+                const sidebarSyncEl = document.getElementById('sync-time-sidebar');
+                if (sidebarSyncEl) sidebarSyncEl.textContent = syncTimeStr;
+
+                // Filter data by hours requested
+                const nowTime = now.getTime();
+                const data = snapshot.records.filter(record => {
+                    if (hours === 720) return true; // All time
+                    const recordTime = new Date(record[2]).getTime();
+                    return (nowTime - recordTime) / (1000 * 60 * 60) <= hours;
+                });
                 data.forEach(record => {
                     const cellId = record[0];
                     if (loadedCellIds.has(cellId)) return;
@@ -218,6 +220,13 @@ async function loadCommunitySearchedAreas(hours = 24) {
                     const lonMin = f0 + (x * h) / p0;
                     const latMax = Ey + ((y + 1) * h) / Ay;
                     const lonMax = f0 + ((x + 1) * h) / p0;
+
+                    // Optimization: Skip rendering cells outside the 10km (medRadius) radius
+                    const cellCenter = L.latLng((latMin + latMax) / 2, (lonMin + lonMax) / 2);
+                    const cctvLatLng = L.latLng(cctvCoords[0], cctvCoords[1]);
+                    if (cctvLatLng.distanceTo(cellCenter) > medRadius) {
+                        return; // Skip rendering to improve performance
+                    }
 
                     const bounds = [[latMin, lonMin], [latMax, lonMax]];
                     const date = new Date(record[2]);
@@ -271,6 +280,13 @@ async function loadCommunitySearchedAreas(hours = 24) {
                     const lonMin = f0 + (x * h) / p0;
                     const latMax = Ey + ((y + 1) * h) / Ay;
                     const lonMax = f0 + ((x + 1) * h) / p0;
+
+                    // Optimization: Skip rendering cells outside the 10km (medRadius) radius
+                    const cellCenter = L.latLng((latMin + latMax) / 2, (lonMin + lonMax) / 2);
+                    const cctvLatLng = L.latLng(cctvCoords[0], cctvCoords[1]);
+                    if (cctvLatLng.distanceTo(cellCenter) > medRadius) {
+                        return; // Skip rendering to improve performance
+                    }
 
                     const bounds = [[latMin, lonMin], [latMax, lonMax]];
                     const date = new Date(record.timestamp);

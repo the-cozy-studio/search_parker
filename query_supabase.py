@@ -11,7 +11,7 @@ headers = {
 }
 
 data = {
-    "p_window_hours": 6
+    "p_window_hours": 720
 }
 
 req = urllib.request.Request(
@@ -26,12 +26,19 @@ try:
         if response.status == 200:
             res_data = json.loads(response.read().decode('utf-8'))
             print(f"Received {len(res_data)} records from database.")
-            if res_data:
-                print("Sample record:", json.dumps(res_data[0], indent=2))
-                print("\nAll records:")
-                print(json.dumps(res_data, indent=2))
-            else:
-                print("No records returned. (No one might have searched in the past 6 hours, or database is empty).")
+            
+            import os
+            from datetime import datetime
+            
+            os.makedirs('project/data', exist_ok=True)
+            snapshot = {
+                "sync_time": datetime.now().isoformat(),
+                "records": res_data
+            }
+            
+            with open('project/data/search_coverage.json', 'w') as f:
+                json.dump(snapshot, f, indent=2)
+            print("Saved snapshot to project/data/search_coverage.json")
         else:
             print("Failed with status:", response.status)
 except Exception as e:
