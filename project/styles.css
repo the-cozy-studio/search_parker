@@ -21,13 +21,15 @@ body {
     background-color: var(--bg-color);
     color: var(--text-main);
     font-family: var(--font-sans);
-    height: 100vh;
+    height: 100vh; /* fallback */
+    height: 100dvh;
     overflow: hidden;
 }
 
 .dashboard-container {
     display: flex;
-    height: 100vh;
+    height: 100vh; /* fallback */
+    height: 100dvh;
     width: 100vw;
 }
 
@@ -508,17 +510,21 @@ body {
 .layers-toggle-btn {
     display: none; /* Only show on mobile */
     position: absolute;
-    bottom: 2rem;
+    bottom: 3rem; /* Lifted up slightly to avoid any browser UI */
     left: 50%;
     transform: translateX(-50%);
-    z-index: 1001;
-    font-size: 0.9rem;
+    z-index: 9999; /* Max z-index to ensure it is always clickable */
+    font-size: 1rem;
+    font-weight: bold;
     gap: 0.5rem;
-    background: rgba(17, 20, 28, 0.9);
+    background: #11141c;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: white;
     backdrop-filter: blur(12px);
     border-radius: 30px;
-    padding: 0.75rem 1.25rem;
+    padding: 0.75rem 1.5rem;
     white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
 }
 
 .close-sidebar-btn {
@@ -572,7 +578,8 @@ body {
         border-radius: 20px 20px 0 0;
         transform: translateY(110%);
         transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        padding-bottom: 5rem; /* Extra padding for bottom edge so it doesn't overlap toggle button */
+        padding-bottom: 6rem; /* Extra padding for bottom edge so it doesn't overlap toggle button */
+        z-index: 9998; /* Just below the toggle button */
     }
     
     .map-controls.show {
