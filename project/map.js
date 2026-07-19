@@ -128,8 +128,8 @@ function getSectorPolygon(center, startAngle, endAngle, radiusKm) {
     return points;
 }
 
-// 1. Predicted Cone (Northeast Direction) - Bearing roughly 35° to 95° from CCTV extending 10km (Medium Limit)
-const conePoints = getSectorPolygon(cctvCoords, 35, 95, 10.0);
+// 1. Predicted Cone (Northeast Direction) - Bearing roughly 24° to 84° (centered on 54°) from CCTV extending 10km (Medium Limit)
+const conePoints = getSectorPolygon(cctvCoords, 24, 84, 10.0);
 const travelCone = L.polygon(conePoints, {
     color: '#f59e0b',
     fillColor: '#f59e0b',
