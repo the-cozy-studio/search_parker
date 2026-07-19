@@ -164,8 +164,12 @@ const communitySearchedLayer = L.layerGroup().addTo(map);
 const loadedCellIds = new Set();
 
 // Fetch and draw live searched grid cells from Supabase
-async function loadCommunitySearchedAreas() {
+async function loadCommunitySearchedAreas(hours = 6) {
     try {
+        // Clear previous visual cells and tracker keys
+        loadedCellIds.clear();
+        communitySearchedLayer.clearLayers();
+
         const response = await fetch(supabaseUrl, {
             method: "POST",
             headers: {
@@ -173,7 +177,7 @@ async function loadCommunitySearchedAreas() {
                 "Authorization": `Bearer ${supabaseAnonKey}`,
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ p_window_hours: 6 })
+            body: JSON.stringify({ p_window_hours: hours })
         });
         
         if (!response.ok) {
@@ -341,4 +345,19 @@ document.getElementById('show-community-searched').addEventListener('change', fu
 document.getElementById('show-sightings').addEventListener('change', function (e) {
     if (e.target.checked) map.addLayer(sightingsLayer);
     else map.removeLayer(sightingsLayer);
+});
+
+document.getElementById('search-time-window').addEventListener('change', function(e) {
+    const hours = parseInt(e.target.value);
+    loadCommunitySearchedAreas(hours);
+    
+    // Dynamically update the sidebar text to reflect the chosen timeframe
+    const sidebarGridDesc = document.querySelector('.zone-green p');
+    if (sidebarGridDesc) {
+        if (hours === 720) {
+            sidebarGridDesc.innerHTML = `All-time community searched coverage (synced from searchparker.org).`;
+        } else {
+            sidebarGridDesc.innerHTML = `Areas searched in the ${hours} hours leading up to **Saturday, July 18 at 11:36 PM** (synced from searchparker.org).`;
+        }
+    }
 });
