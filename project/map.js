@@ -439,7 +439,7 @@ document.getElementById('search-time-window').addEventListener('change', functio
         if (hours === 720) {
             sidebarGridDesc.innerHTML = `All-time community searched coverage (synced from searchparker.org).`;
         } else {
-            sidebarGridDesc.innerHTML = `Areas searched in the ${hours} hours leading up to **Saturday, July 18 at 11:36 PM** (synced from searchparker.org).`;
+            sidebarGridDesc.innerHTML = `Areas searched in the last ${hours} hours (synced live from searchparker.org).`;
         }
     }
 });
