@@ -2,8 +2,9 @@
 const dayHomeCoords = [51.0850566, -114.0931908];
 const cctvCoords = [51.1009931, -114.0582958];
 
-// Supabase API config to load live searched grids
+// Supabase API config to load and submit live searched grids
 const supabaseUrl = "https://ozoselvlkrnlalvehobf.supabase.co/rest/v1/rpc/get_search_cell_status_snapshot";
+const submitUrl = "https://ozoselvlkrnlalvehobf.supabase.co/rest/v1/rpc/create_search_submission";
 const supabaseAnonKey = "sb_publishable_sd9ej6H1-2pGQP11l4vDAQ__JG0rWkr";
 
 // Grid anchors matching searchparker.org
@@ -11,7 +12,6 @@ const Ey = 51.085;
 const f0 = -114.095;
 const Ay = 111320;
 const p0 = Ay * Math.cos(Ey * Math.PI / 180);
-
 
 // Speed Calculation:
 // - Day Home to CCTV Walking Route Distance (on roads): ~5.5 km
@@ -157,9 +157,11 @@ const medZone = L.circle(cctvCoords, {
     dashArray: '6, 6'
 }).addTo(map);
 
-
 // Layer group for community searched cells
 const communitySearchedLayer = L.layerGroup().addTo(map);
+
+// Set to keep track of already drawn cells to prevent duplicates
+const loadedCellIds = new Set();
 
 // Fetch and draw live searched grid cells from Supabase
 async function loadCommunitySearchedAreas() {
@@ -182,8 +184,10 @@ async function loadCommunitySearchedAreas() {
         const data = await response.json();
         
         data.forEach(record => {
-            // record format: [cell_id, report_count, last_searched_at_timestamp]
             const cellId = record[0];
+            if (loadedCellIds.has(cellId)) return;
+            loadedCellIds.add(cellId);
+            
             const parts = cellId.split(':');
             if (parts.length !== 3) return;
 
@@ -224,6 +228,82 @@ async function loadCommunitySearchedAreas() {
         console.error("Error loading community search coverage:", e);
     }
 }
+
+// Function to submit a newly searched cell live to Supabase
+window.submitSearch = async function(cellId) {
+    map.closePopup();
+    
+    try {
+        const response = await fetch(submitUrl, {
+            method: "POST",
+            headers: {
+                "apikey": supabaseAnonKey,
+                "Authorization": `Bearer ${supabaseAnonKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                p_cell_ids: [cellId],
+                p_searched_at: new Date().toISOString()
+            })
+        });
+        
+        if (!response.ok) {
+            alert("Submission failed: " + response.statusText);
+            return;
+        }
+        
+        // Immediately trigger refresh of all searched areas
+        await loadCommunitySearchedAreas();
+        alert("Success! Grid cell " + cellId + " marked as searched and synced live to searchparker.org");
+        
+    } catch (e) {
+        console.error("Error submitting search:", e);
+        alert("Network error connecting to search database.");
+    }
+}
+
+// Map Click Listener to let searchers click to mark areas
+map.on('click', function(e) {
+    const lat = e.latlng.lat;
+    const lon = e.latlng.lng;
+    
+    // Grid sizing
+    const h = 20; // 20m cells
+    const x = Math.floor((lon - f0) * p0 / h);
+    const y = Math.floor((lat - Ey) * Ay / h);
+    
+    const cellId = `g20:${x}:${y}`;
+    
+    // Check distance to CCTV marker to prevent marking non-relevant areas
+    const clickLatLng = L.latLng(lat, lon);
+    const cctvLatLng = L.latLng(cctvCoords[0], cctvCoords[1]);
+    const distance = cctvLatLng.distanceTo(clickLatLng);
+    
+    if (distance > medRadius) {
+        // Outside 10km search limit, do not prompt
+        return;
+    }
+    
+    // If the cell is already loaded/searched, do not prompt to submit again
+    if (loadedCellIds.has(cellId)) {
+        return;
+    }
+    
+    const popupContent = `
+        <div class="map-popup-content" style="min-width: 180px; font-family: sans-serif; padding: 0.2rem;">
+            <h4 style="color:#10b981; font-weight:700; margin-bottom:0.4rem; font-size:0.85rem;">Mark Area as Searched?</h4>
+            <p style="font-size:0.75rem; margin-bottom:0.75rem; color:#d1d5db; line-height:1.3;">
+                Mark this 20-meter grid cell (${cellId}) as searched. This updates <strong>searchparker.org</strong> live.
+            </p>
+            <button onclick="submitSearch('${cellId}')" style="background:#10b981; border:none; color:white; padding:0.45rem 0.8rem; border-radius:4px; font-weight:600; cursor:pointer; width:100%; font-size:0.75rem;">➕ Confirm Search</button>
+        </div>
+    `;
+    
+    L.popup()
+        .setLatLng(e.latlng)
+        .setContent(popupContent)
+        .openOn(map);
+});
 
 // Set bounds to Medium Probability Zone (10.0 km) to restrict view
 const bounds = medZone.getBounds();
