@@ -160,6 +160,14 @@ const medZone = L.circle(cctvCoords, {
 // Layer group for community searched cells
 const communitySearchedLayer = L.layerGroup().addTo(map);
 
+// Highlight rectangle for current map click grid preview
+const clickHighlight = L.rectangle([[0,0], [0,0]], {
+    color: '#3b82f6', // Bright blue outline
+    weight: 2,
+    fillColor: '#3b82f6',
+    fillOpacity: 0.15
+}).addTo(map);
+
 // Set to keep track of already drawn cells to prevent duplicates
 const loadedCellIds = new Set();
 
@@ -293,6 +301,16 @@ map.on('click', function(e) {
         return;
     }
     
+    // Calculate cell coordinates for highlight boundaries
+    const latMin = Ey + (y * h) / Ay;
+    const lonMin = f0 + (x * h) / p0;
+    const latMax = Ey + ((y + 1) * h) / Ay;
+    const lonMax = f0 + ((x + 1) * h) / p0;
+    const cellBounds = [[latMin, lonMin], [latMax, lonMax]];
+    
+    // Set preview highlight bounding box
+    clickHighlight.setBounds(cellBounds);
+    
     const popupContent = `
         <div class="map-popup-content" style="min-width: 180px; font-family: sans-serif; padding: 0.2rem;">
             <h4 style="color:#10b981; font-weight:700; margin-bottom:0.4rem; font-size:0.85rem;">Mark Area as Searched?</h4>
@@ -307,6 +325,11 @@ map.on('click', function(e) {
         .setLatLng(e.latlng)
         .setContent(popupContent)
         .openOn(map);
+});
+
+// Clear highlight when popup closes
+map.on('popupclose', function() {
+    clickHighlight.setBounds([[0,0], [0,0]]);
 });
 
 // Set bounds to Medium Probability Zone (10.0 km) to restrict view
