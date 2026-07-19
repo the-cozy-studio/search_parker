@@ -172,7 +172,7 @@ const clickHighlight = L.rectangle([[0,0], [0,0]], {
 const loadedCellIds = new Set();
 
 // Fetch and draw live searched grid cells
-async function loadCommunitySearchedAreas(hours = 720) {
+async function loadCommunitySearchedAreas(hours = 24) {
     try {
         // Clear previous visual cells and tracker keys
         loadedCellIds.clear();
@@ -412,8 +412,9 @@ window.addEventListener('load', () => {
     map.fitBounds(bounds, { padding: [20, 20] });
     map.setMaxBounds(bounds.pad(0.05)); // Lock view inside the 10km boundary
     
-    // Load the searched grid cells
-    loadCommunitySearchedAreas();
+    // Load the searched grid cells based on default dropdown value (24 hours)
+    const initialHours = parseInt(document.getElementById('search-time-window').value) || 24;
+    loadCommunitySearchedAreas(initialHours);
 });
 
 // Layer toggles

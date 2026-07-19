@@ -123,7 +123,7 @@
             <!-- Data Sources -->
             <section class="sources card" style="padding: 0.85rem; font-size: 0.75rem; color: var(--text-muted); line-height: 1.35; display: flex; flex-direction: column; gap: 0.35rem;">
                 <p><strong>Historic Wander Limits:</strong> Robert Koester / ISRID Database (<a href="https://www.dbs-sar.com/" target="_blank" style="color: var(--accent-gold); text-decoration: none;">dBS Publications</a>).</p>
-                <p><strong>Search Coverage:</strong> Volunteer reports from the last 6 hours (synced at <span id="sync-time-sidebar">...</span> from <a href="https://searchparker.org/" target="_blank" style="color: #10b981; text-decoration: none; font-weight: 600;">searchparker.org</a>).</p>
+                <p><strong>Search Coverage:</strong> Volunteer reports from the last 24 hours (synced at <span id="sync-time-sidebar">...</span> from <a href="https://searchparker.org/" target="_blank" style="color: #10b981; text-decoration: none; font-weight: 600;">searchparker.org</a>).</p>
             </section>
         </aside>
 
@@ -154,9 +154,9 @@
                     <div class="control-subgroup" style="padding-left: 1.55rem; margin-top: 0.15rem; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.4rem;">
                         <span style="font-size: 0.75rem; color: #a1a1aa;">Timeframe:</span>
                         <select id="search-time-window" style="background: #27272a; color: white; border: 1px solid #3f3f46; border-radius: 4px; padding: 0.15rem 0.35rem; font-size: 0.7rem; cursor: pointer; outline: none; font-family: 'Inter', sans-serif;">
-                            <option value="6" selected>Past 6 Hours</option>
+                            <option value="6">Past 6 Hours</option>
                             <option value="12">Past 12 Hours</option>
-                            <option value="24">Past 24 Hours</option>
+                            <option value="24" selected>Past 24 Hours</option>
                             <option value="48">Past 48 Hours</option>
                             <option value="72">Past 72 Hours (3 Days)</option>
                             <option value="720">All-Time Coverage</option>
