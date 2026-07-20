@@ -63,11 +63,11 @@ try:
             print(f"Received {len(res_data)} records from database.")
             
             import os
-            from datetime import datetime
+            from datetime import datetime, timezone
             
             os.makedirs('project/data', exist_ok=True)
             snapshot = {
-                "sync_time": datetime.now().isoformat(),
+                "sync_time": datetime.now(timezone.utc).isoformat(),
                 "records": res_data
             }
             

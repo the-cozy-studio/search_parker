@@ -183,7 +183,13 @@ async function loadCommunitySearchedAreas(hours = 24) {
                 // Use snapshot sync time for UI
                 now = new Date(snapshot.sync_time);
                 lastSyncTime = now;
-                const syncTimeStr = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                const syncTimeStr = now.toLocaleString('en-US', { 
+                    timeZone: 'America/Edmonton', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: 'numeric', 
+                    minute: '2-digit' 
+                }) + ' MT';
                 
                 const headerSyncEl = document.getElementById('sync-time-header');
                 if (headerSyncEl) headerSyncEl.textContent = syncTimeStr;
