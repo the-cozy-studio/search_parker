@@ -11,7 +11,7 @@ The Search Parker portal is a localized mapping application designed to coordina
 - **Frontend**: Vanilla Javascript, HTML5, CSS3.
 - **Mapping Engine**: Leaflet.js rendering OpenStreetMap tiles and satellite layers.
 - **Hosting**: GitHub Pages (Static Site).
-- **Automation**: GitHub Actions runs `query_supabase.py` hourly to fetch the latest data.
+- **Automation**: GitHub Actions runs `query_supabase.py` hourly to fetch the latest data and triggers the GitHub Pages deployment automatically.
 
 ### 2. Predictive Search Zones
 The map automatically generates probability zones based on the two known sightings:
