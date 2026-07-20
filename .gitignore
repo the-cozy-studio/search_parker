@@ -6,6 +6,3 @@ node_modules/
 # Python cache
 __pycache__/
 *.pyc
-
-# Ignored data files (generated automatically by GitHub Actions)
-project/data/search_coverage.json
