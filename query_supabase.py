@@ -35,6 +35,9 @@ try:
 except Exception as e:
     print("Failed to scrape dynamic keys, using fallbacks. Error:", e)
 
+import os
+from datetime import datetime
+
 headers = {
     'apikey': apikey,
     'Authorization': f'Bearer {apikey}',
@@ -75,3 +78,4 @@ try:
             print("Failed with status:", response.status)
 except Exception as e:
     print("Error querying database:", e)
+
