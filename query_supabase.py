@@ -1,11 +1,43 @@
 import urllib.request
 import urllib.parse
 import json
+import re
 
+# Fallback defaults
 url = "https://ozoselvlkrnlalvehobf.supabase.co/rest/v1/rpc/get_search_cell_status_snapshot"
+apikey = "sb_publishable_sd9ej6H1-2pGQP11l4vDAQ__JG0rWkr"
+
+# Attempt to dynamically scrape the latest keys from searchparker.org
+try:
+    print("Fetching searchparker.org to extract live keys...")
+    req_html = urllib.request.Request("https://searchparker.org", headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(req_html, timeout=10) as res_html:
+        html = res_html.read().decode('utf-8')
+        match = re.search(r'src="(/assets/index-[^"]+\.js)"', html)
+        if match:
+            js_url = "https://searchparker.org" + match.group(1)
+            req_js = urllib.request.Request(js_url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req_js, timeout=10) as res_js:
+                js_content = res_js.read().decode('utf-8')
+                url_match = re.search(r'https://[a-zA-Z0-9_-]+\.supabase\.co', js_content)
+                key_match = re.search(r'sb_publishable_[a-zA-Z0-9_-]+', js_content)
+                
+                if url_match and key_match:
+                    extracted_url = url_match.group(0)
+                    extracted_key = key_match.group(0)
+                    url = f"{extracted_url}/rest/v1/rpc/get_search_cell_status_snapshot"
+                    apikey = extracted_key
+                    print(f"Successfully extracted dynamic keys! URL: {extracted_url}")
+                else:
+                    print("Could not find keys in JS bundle, using fallbacks.")
+        else:
+            print("Could not find JS bundle in HTML, using fallbacks.")
+except Exception as e:
+    print("Failed to scrape dynamic keys, using fallbacks. Error:", e)
+
 headers = {
-    'apikey': 'sb_publishable_sd9ej6H1-2pGQP11l4vDAQ__JG0rWkr',
-    'Authorization': 'Bearer sb_publishable_sd9ej6H1-2pGQP11l4vDAQ__JG0rWkr',
+    'apikey': apikey,
+    'Authorization': f'Bearer {apikey}',
     'Content-Type': 'application/json',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
