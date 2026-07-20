@@ -160,20 +160,9 @@ const medZone = L.circle(cctvCoords, {
 // Layer group for community searched cells
 const communitySearchedLayer = L.layerGroup().addTo(map);
 
-// Highlight rectangle for current map click grid preview
-const clickHighlight = L.rectangle([[0,0], [0,0]], {
-    color: '#3b82f6', // Bright blue outline
-    weight: 2,
-    fillColor: '#3b82f6',
-    fillOpacity: 0.15
-}).addTo(map);
-
 // Set to keep track of already drawn cells to prevent duplicates
 const loadedCellIds = new Set();
 let lastSyncTime = null;
-
-// Check if the serverless backend is available (disabled on GitHub Pages static host)
-const isBackendAvailable = !window.location.hostname.includes('github.io') && window.location.protocol !== 'file:';
 
 // Fetch and draw live searched grid cells
 async function loadCommunitySearchedAreas(hours = 24) {
@@ -268,171 +257,10 @@ async function loadCommunitySearchedAreas(hours = 24) {
             console.error("Public data fetch error:", e);
         }
 
-        // 2. Fetch Local Team Data (only if backend is available)
-        if (isBackendAvailable) {
-            try {
-                const localResponse = await fetch('/.netlify/functions/local_searches');
-                if (localResponse.ok) {
-                    const localData = await localResponse.json();
-                    localData.forEach(record => {
-                        const cellId = record.cellId;
-                        if (loadedCellIds.has(cellId)) return;
-                        loadedCellIds.add(cellId);
-                        
-                        const parts = cellId.split(':');
-                        if (parts.length !== 3) return;
-
-                        const h = parseInt(parts[0].substring(1));
-                        const x = parseInt(parts[1]);
-                        const y = parseInt(parts[2]);
-
-                        const latMin = Ey + (y * h) / Ay;
-                        const lonMin = f0 + (x * h) / p0;
-                        const latMax = Ey + ((y + 1) * h) / Ay;
-                        const lonMax = f0 + ((x + 1) * h) / p0;
-
-                        // Optimization: Skip rendering cells outside the 10km (medRadius) radius
-                        const cellCenter = L.latLng((latMin + latMax) / 2, (lonMin + lonMax) / 2);
-                        const cctvLatLng = L.latLng(cctvCoords[0], cctvCoords[1]);
-                        if (cctvLatLng.distanceTo(cellCenter) > medRadius) {
-                            return; // Skip rendering to improve performance
-                        }
-
-                        const bounds = [[latMin, lonMin], [latMax, lonMax]];
-                        const date = new Date(record.timestamp);
-                        const color = '#3b82f6'; // Blue
-
-                        const rect = L.rectangle(bounds, {
-                            color: color,
-                            weight: 1,
-                            fillColor: color,
-                            fillOpacity: 0.5
-                        });
-
-                        rect.bindPopup(`
-                            <div class="map-popup-content blue" style="min-width: 150px;">
-                                <h4 style="color:${color};">✅ LOCAL TEAM COVERAGE</h4>
-                                <p><strong>Grid Cell:</strong> ${cellId}</p>
-                                <p><strong>Searches Logged:</strong> 1 (Local)</p>
-                                <p><strong>Time:</strong> ${date.toLocaleTimeString()} (${date.toLocaleDateString()})</p>
-                            </div>
-                        `);
-                        
-                        rect.addTo(communitySearchedLayer);
-                    });
-                }
-            } catch (e) {
-                console.error("Local data fetch error:", e);
-            }
-        }
-
     } catch (e) {
         console.error("Error loading search coverage:", e);
     }
 }
-
-// Function to submit a newly searched cell live to Local Server
-window.submitSearch = async function(cellId) {
-    if (!isBackendAvailable) return;
-    map.closePopup();
-    
-    try {
-        const response = await fetch('/.netlify/functions/local_searches', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                cellId: cellId,
-                timestamp: new Date().toISOString()
-            })
-        });
-        
-        if (!response.ok) {
-            let errorMsg = response.statusText;
-            try {
-                const errData = await response.json();
-                if (errData.error) errorMsg = errData.error;
-            } catch (e) {}
-            alert("Submission failed: " + errorMsg);
-            return;
-        }
-        
-        // Immediately trigger refresh of all searched areas
-        await loadCommunitySearchedAreas();
-        alert("Success! Grid cell " + cellId + " marked as searched (Local Team Data).");
-        
-    } catch (e) {
-        console.error("Error submitting search:", e);
-        alert("Network error connecting to local database.");
-    }
-}
-
-// Map Click Listener to let searchers click to mark areas
-map.on('click', function(e) {
-    if (!isBackendAvailable) return; // Disable click-to-mark on static hosts
-    
-    const lat = e.latlng.lat;
-    const lon = e.latlng.lng;
-    
-    // Grid sizing
-    const h = 20; // 20m cells
-    const x = Math.floor((lon - f0) * p0 / h);
-    const y = Math.floor((lat - Ey) * Ay / h);
-    
-    const cellId = `g20:${x}:${y}`;
-    
-    // Check distance to CCTV marker to prevent marking non-relevant areas
-    const clickLatLng = L.latLng(lat, lon);
-    const cctvLatLng = L.latLng(cctvCoords[0], cctvCoords[1]);
-    const distance = cctvLatLng.distanceTo(clickLatLng);
-    
-    if (distance > medRadius) {
-        // Outside 10km search limit, do not prompt
-        return;
-    }
-    
-    // If the cell is already loaded/searched, do not prompt to submit again
-    if (loadedCellIds.has(cellId)) {
-        return;
-    }
-    
-    // Calculate cell coordinates for highlight boundaries
-    const latMin = Ey + (y * h) / Ay;
-    const lonMin = f0 + (x * h) / p0;
-    const latMax = Ey + ((y + 1) * h) / Ay;
-    const lonMax = f0 + ((x + 1) * h) / p0;
-    const cellBounds = [[latMin, lonMin], [latMax, lonMax]];
-    
-    // Set preview highlight bounding box
-    clickHighlight.setBounds(cellBounds);
-    
-    const popupContent = `
-        <div class="map-popup-content" style="min-width: 180px; font-family: sans-serif; padding: 0.2rem;">
-            <h4 style="color:#3b82f6; font-weight:700; margin-bottom:0.4rem; font-size:0.85rem;">Mark Area as Searched?</h4>
-            <p style="font-size:0.75rem; margin-bottom:0.75rem; color:#d1d5db; line-height:1.3;">
-                Mark this 20-meter grid cell (${cellId}) as searched. This updates <strong>your local team map</strong> live.
-            </p>
-            <button onclick="submitSearch('${cellId}')" style="background:#3b82f6; border:none; color:white; padding:0.45rem 0.8rem; border-radius:4px; font-weight:600; cursor:pointer; width:100%; font-size:0.75rem;">➕ Confirm Search</button>
-        </div>
-    `;
-    
-    // Anchor the popup at the top-center edge of the grid cell
-    const topCenter = L.latLng(latMax, (lonMin + lonMax) / 2);
-    
-    L.popup({
-        offset: L.point(0, -4), // Offset upwards so the popup doesn't block the highlighted cell
-        closeButton: true
-    })
-        .setLatLng(topCenter)
-        .setContent(popupContent)
-        .openOn(map);
-});
-
-// Clear highlight when popup closes
-map.on('popupclose', function() {
-    clickHighlight.setBounds([[0,0], [0,0]]);
-});
 
 // Set bounds to Medium Probability Zone (10.0 km) to restrict view
 const bounds = medZone.getBounds();
@@ -441,16 +269,6 @@ window.addEventListener('load', () => {
     map.invalidateSize();
     map.fitBounds(bounds, { padding: [20, 20] });
     map.setMaxBounds(bounds.pad(0.05)); // Lock view inside the 10km boundary
-    
-    // Dim local team zone if backend is not available
-    if (!isBackendAvailable) {
-        const localTeamZone = document.getElementById('local-team-zone');
-        if (localTeamZone) {
-            localTeamZone.style.opacity = '0.5';
-            const desc = localTeamZone.querySelector('p');
-            if (desc) desc.innerHTML = '<em>Unavailable on static host (Netlify only).</em>';
-        }
-    }
 
     // Load the searched grid cells based on default dropdown value (24 hours)
     const initialHours = parseInt(document.getElementById('search-time-window').value) || 24;
